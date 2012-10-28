@@ -589,13 +589,14 @@ static int input_callback(int fd, short revents, void *data)
                 }
                 //vibrate(VIBRATOR_TIME_MS);
             }
-            if (slide_right == 1) {
+	    //Disable Slide events
+            /*if (slide_right == 1) {
                 ev.code = KEY_POWER;
                 slide_right = 0;
             } else if (slide_left == 1) {
                 ev.code = KEY_BACK;
                 slide_left = 0;
-            }
+            }*/
 
 //    if (ev.value == 2) {
 //        boardEnableKeyRepeat = 0;
