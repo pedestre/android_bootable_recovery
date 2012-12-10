@@ -1017,12 +1017,12 @@ static void run_dedupe_gc(const char* other_sd) {
 }
 
 static void choose_backup_format() {
-    static char* headers[] = {  "Formato de Backups",
+    static char* headers[] = {  "Formato de Backups (para esta sesion)",
                                 "",
                                 NULL
     };
 
-    char* list[] = { "dup (por defecto)",
+    char* list[] = { "dup",
         "tar", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
     };
 
@@ -1246,7 +1246,7 @@ int can_partition(const char* volume) {
 
     int vol_len = strlen(vol->device);
     // do not allow partitioning of a device that isn't mmcblkX or mmcblkXp1
-    if (vol->device[vol_len - 2] == 'p' && vol->device[vol_len - 2] != '1') {
+    if (vol->device[vol_len - 2] == 'p' && vol->device[vol_len - 1] != '1') {
         LOGI("No se puede particionar la unidad insegura: %s\n", vol->device);
         return 0;
     }

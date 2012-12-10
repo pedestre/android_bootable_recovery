@@ -282,6 +282,7 @@ int nandroid_backup_partition_extended(const char* backup_path, const char* moun
         ui_print("Error mientras se hacía una imagen backup de %s!\n", mount_point);
         return ret;
     }
+    ui_print("Copia de Seguridad de %s completada.\n", name);
     return 0;
 }
 
@@ -289,7 +290,7 @@ int nandroid_backup_partition(const char* backup_path, const char* root) {
     Volume *vol = volume_for_path(root);
     // make sure the volume exists before attempting anything...
     if (vol == NULL || vol->fs_type == NULL)
-        return NULL;
+        return 0;
 
     // see if we need a raw backup (mtd)
     char tmp[PATH_MAX];
@@ -304,6 +305,7 @@ int nandroid_backup_partition(const char* backup_path, const char* root) {
             ui_print("Error mientras se copiaba la imagen %s!", name);
             return ret;
         }
+	ui_print("Copia de seguridad de la imagen de %s completada.\n", name);
         return 0;
     }
 
