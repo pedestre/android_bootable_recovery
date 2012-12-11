@@ -30,6 +30,7 @@
 #include "minzip/DirUtil.h"
 #include "roots.h"
 #include "recovery_ui.h"
+#include "recovery.h"
 
 #include "extendedcommands.h"
 #include "nandroid.h"
@@ -164,6 +165,51 @@ void show_install_update_menu()
 
     }
 }
+
+void show_install_rom_menu()
+{
+    static char* headers[] = {  "INSTALANDO ROM DESDE .zip",
+                                "",
+                                NULL
+    };
+    
+    char* install_menu_items[] = {  "Elegir ZIP desde la sdcard",
+                                    NULL,
+                                    NULL,
+                                    NULL,
+                                    NULL };
+
+    char *other_sd = NULL;
+    if (volume_for_path("/emmc") != NULL) {
+        other_sd = "/emmc/";
+        install_menu_items[1] = "Elegir zip desde la SD INTERNA";
+    }
+    else if (volume_for_path("/external_sd") != NULL) {
+        other_sd = "/external_sd/";
+        install_menu_items[1] = "Elegir zip desde la SD EXTERNA";
+    }
+    
+    for (;;)
+    {
+        int chosen_item = get_menu_selection(headers, install_menu_items, 0, 0);
+        switch (chosen_item)
+        {
+            
+            case 0:		
+                show_choose_ROM_menu("/sdcard/");
+                break;
+            case 1:
+                if (other_sd != NULL)
+                show_choose_ROM_menu(other_sd);
+                break;
+            default:
+                return;
+        }
+
+    }
+}
+
+
 
 void free_string_array(char** array)
 {
@@ -380,6 +426,46 @@ void show_choose_zip_menu(const char *mount_point)
     static char confirm[PATH_MAX];
     sprintf(confirm, "Si - Instalar %s", basename(file));
     if (confirm_selection(confirm_install, confirm))
+        install_zip(file);
+}
+
+void clean_before_rom()
+{
+	if (confirm_selection("BORRAR los datos y la ROM actual?,", "¡¡ SI !!, ¡ voy a instalar una ROM !")) {
+	wipe_data(0);
+	ui_print("Borrando /system ...\n");
+	erase_volume("/system");
+	ui_print("Borrando /preload ...\n");
+	erase_volume("/preload");
+}
+}
+
+void show_choose_ROM_menu(const char *mount_point)
+{
+    if (ensure_path_mounted(mount_point) != 0) {
+        LOGE ("No es posible montar %s\n", mount_point);
+        return;
+    }
+
+    static char* headers[] = {  "Elegir el zip de la ROM",
+                                "",
+                                NULL
+    };
+	
+	
+	
+    char* file = choose_file_menu(mount_point, ".zip", headers);
+    if (file == NULL)
+        return;
+    static char* confirm_install  = "¿BORRAR DATOS e INSTALAR la ROM ?";
+    static char confirm[PATH_MAX];
+    sprintf(confirm, "Si - BORRAR DATOS e Instalar %s ", basename(file));
+    if (confirm_selection(confirm_install, confirm))
+		wipe_data(0);
+		ui_print("Borrando /system ...\n");
+		erase_volume("/system");
+		ui_print("Borrando /preload ...\n");
+		erase_volume("/preload");
         install_zip(file);
 }
 
@@ -960,7 +1046,7 @@ void show_nandroid_advanced_restore_menu(const char* path)
     };
 
     static char* list[] = { "Restaurar boot",
-                            "Restaurar system",
+                            "Restaurar system y preload",
                             "Restaurar data",
                             "Restaurar cache",
                             "Restaurar sd-ext",
@@ -983,7 +1069,7 @@ void show_nandroid_advanced_restore_menu(const char* path)
                 nandroid_restore(file, 1, 0, 0, 0, 0, 0);
             break;
         case 1:
-            if (confirm_selection(confirm_restore, "Si - Restaurarsystem"))
+            if (confirm_selection(confirm_restore, "Si - Restaurar System y Preload"))
                 nandroid_restore(file, 0, 1, 0, 0, 0, 0);
             break;
         case 2:

@@ -299,7 +299,7 @@ finish_recovery(const char *send_intent) {
     sync();  // For good measure.
 }
 
-static int
+/*static*/ int
 erase_volume(const char *volume) {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
@@ -627,7 +627,7 @@ update_directory(const char* path, const char* unmount_when_done) {
     return result;
 }
 
-static void
+/*static*/ void //we use it outside
 wipe_data(int confirm) {
     if (confirm) {
         static char** title_headers = NULL;
@@ -719,7 +719,11 @@ prompt_and_wait() {
             case ITEM_APPLY_SDCARD:
                 show_install_update_menu();
                 break;
-
+				
+			case ITEM_APPLY_ROM:
+				show_install_rom_menu();
+                break;
+				
             case ITEM_NANDROID:
                 show_nandroid_menu();
                 break;

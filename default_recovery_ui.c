@@ -24,6 +24,7 @@ char* MENU_HEADERS[] = { NULL };
 
 char* MENU_ITEMS[] = { "Reiniciar el sistema",
                        "Instalar zip desde la sdcard",
+		       "Instalar ROM (LIMPIEZA INCLUIDA)",
                        "Borrar datos (Wipe Data)",
                        "Borrar cache (Wipe Cache)",
                        "Copias de Seguridad y Restauracion",

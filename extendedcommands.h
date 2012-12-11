@@ -28,6 +28,11 @@ show_partition_menu();
 void
 show_choose_zip_menu();
 
+void 
+clean_before_rom();
+
+void show_choose_ROM_menu();
+
 int
 install_zip(const char* packagefilepath);
 
