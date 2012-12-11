@@ -54,28 +54,32 @@ void show_extras_menu()
     char* list[] = {  "Backup/Restaurar efs",
                       "Limpiar Pantalla",
 		      "Activar/Desactivar Doble Toque para Aceptar",
+		      "DEVS: Habilitar/Deshabilitar logcat",
                        NULL };
     
      for (;;)
     {
 	int cont;
         int chosen_item = get_filtered_menu_selection(headers, list, 0, 0, sizeof(list) / sizeof(char*));
-        if (chosen_item == GO_BACK)
-            break;
-        switch (chosen_item)
+		if (chosen_item == GO_BACK)
+			break;
+		switch (chosen_item)
         {
 	    case 0:
             show_efs_menu();
-		break;
+			break;
 	    case 1:
 		
-		for (cont= 0; cont < 32; cont++) {
-			ui_print("\n");
-		}
-		break;
+			for (cont= 0; cont < 32; cont++) {
+				ui_print("\n");
+			}
+			break;
 	    case 2:
-		Change_Touch_disable();
-		break;
+			Change_Touch_disable();
+			break;
+		case 3:
+			Habilitar_Logs();
+			break;
             }
            
      }
@@ -160,9 +164,30 @@ void Change_Touch_disable() {
 	//ui_print( "\n" );
 	ui_print( "Toque Deshabilitado para Aceptar en Menus.\n" );
     }
-    return false;
 
 }
 
+void Habilitar_Logs() {
+
+	ensure_path_mounted("/data");
+
+    FILE * file = fopen("/data/.enable_logs","r");
+    if (file){
+        fclose(file);
+	if( remove( "/data/.enable_logs" ) != 0 ) {
+	    ui_print( "Error Borrando Fichero" );
+	}
+	else {
+	    ui_print( "Logcat Deshabilitado.\n" );
+        }
+    }
+    else {
+	FILE *file2 = fopen("/data/.enable_logs", "w");
+    	fprintf(file2, "%s", "1");
+    	fclose(file2);
+		ui_print( "Logcat Habilitado.\n" );
+    }
+
+}
 
 
