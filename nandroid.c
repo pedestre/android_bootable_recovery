@@ -367,7 +367,8 @@ int nandroid_backup(const char* backup_path)
         return ret;
 
     if (0 != (ret = nandroid_backup_partition(backup_path, "/preload")))
-	return ret;
+	//return ret;
+	uiprint("Omitiendo el backup de /preload...\n");
 
     if (0 != (ret = nandroid_backup_partition(backup_path, "/data")))
         return ret;
@@ -706,7 +707,8 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
         return ret;
     
     if (restore_system && 0 != (ret = nandroid_restore_partition(backup_path, "/preload")))
-	return ret;    
+	//return ret;   
+	uiprint("Omitiendo la restauracion de /preload...\n"); 
 
     if (restore_data && 0 != (ret = nandroid_restore_partition(backup_path, "/data")))
         return ret;
