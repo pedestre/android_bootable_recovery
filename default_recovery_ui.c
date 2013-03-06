@@ -23,12 +23,12 @@
 char* MENU_HEADERS[] = { NULL };
 
 char* MENU_ITEMS[] = { "Reiniciar el sistema",
-                       "Instalar zip desde la sdcard",
-		       "Instalar ROM (LIMPIEZA INCLUIDA)",
+                       "Instalar zip desde las memorias ",
                        "Borrar datos (Wipe Data)",
-                       "Borrar cache (Wipe Cache)",
+               	       "Borrar cache y Dalvik (Wipe Cache y Dalvik)",
                        "Copias de Seguridad y Restauracion",
                        "Montaje de Unidades y Almacenamiento Masivo",
+		       "Instalar ROM en zip (LIMPIEZA INCLUIDA)",
                        "Opciones Avanzadas",
 		       "Extras Apolo",
 		       "Apagar",

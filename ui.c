@@ -46,7 +46,7 @@ static int gShowBackButton = 0;
 #define MAX_ROWS 32
 
 #define MENU_MAX_COLS 64
-#define MENU_MAX_ROWS 250
+#define MENU_MAX_ROWS 250 
 
 #define CHAR_WIDTH 10 //10 //15
 #define CHAR_HEIGHT 36 //36
@@ -314,7 +314,7 @@ static void draw_screen_locked(void)
 int total_rows = (gr_fb_height() / CHAR_HEIGHT) - (gr_get_height(surface) / CHAR_HEIGHT) - 1;
         int i = 0;
         int j = 0;
-	int offset = 1;         // NUEVO cambiado de 1 a 0 offset of separating bar under menus
+	int offset = 0;         // NUEVO cambiado de 1 a 0 offset of separating bar under menus
         int row = 0;            // current row that we are drawing on
         if (show_menu) {
             gr_color(MENU_TEXT_COLOR);
@@ -1345,12 +1345,12 @@ int check_touch_disable(void)
     FILE * file = fopen("/data/.disable_touchselect","r");
     if (file)
     {
-        touch_disable = 1;
+        touch_disable = 0;
         fclose(file);
         return true;
     }
     else {
-	touch_disable = 0;
+	touch_disable = 1;
 	return false;
     }
 	

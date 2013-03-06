@@ -707,11 +707,14 @@ prompt_and_wait() {
                 break;
 
             case ITEM_WIPE_CACHE:
-                if (confirm_selection("Confirma el Borrado?", "Si - Borrar Cache"))
+                if (confirm_selection("Confirma el Borrado?", "Si - Borrar Cache y Dalvik"))
                 {
                     ui_print("\n-- Wiping cache...\n");
                     erase_volume("/cache");
-                    ui_print("wipe cache completo.\n");
+					__system("rm -r /data/dalvik-cache");
+                    __system("rm -r /cache/dalvik-cache");
+                    __system("rm -r /sd-ext/dalvik-cache");
+                    ui_print("Borrado de Cache y Dalvik completado.\n");
                     if (!ui_text_visible()) return;
                 }
                 break;

@@ -73,15 +73,15 @@ int device_wipe_data();
 #define GO_BACK             -5
 
 #define ITEM_REBOOT          0
-#define ITEM_APPLY_EXT       1
+//#define ITEM_APPLY_EXT       1
 #define ITEM_APPLY_SDCARD    1  // historical synonym for ITEM_APPLY_EXT
-#define ITEM_APPLY_ROM       2
-#define ITEM_WIPE_DATA       3
-#define ITEM_WIPE_CACHE      4
+#define ITEM_WIPE_DATA       2
+#define ITEM_WIPE_CACHE      3
 // unused in cwr
-#define ITEM_APPLY_CACHE     5
-#define ITEM_NANDROID        5
-#define ITEM_PARTITION       6
+//#define ITEM_APPLY_CACHE     4
+#define ITEM_NANDROID        4
+#define ITEM_PARTITION       5
+#define ITEM_APPLY_ROM       6
 #define ITEM_ADVANCED        7
 #define ITEM_EXTRAS          8
 #define ITEM_POWEROFF        9

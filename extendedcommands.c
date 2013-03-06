@@ -168,12 +168,12 @@ void show_install_update_menu()
 
 void show_install_rom_menu()
 {
-    static char* headers[] = {  "INSTALANDO ROM DESDE .zip",
+    static char* headers[] = {  "OJOOO INSTALANDO ROM DESDE .zip",
                                 "",
                                 NULL
     };
     
-    char* install_menu_items[] = {  "Elegir ZIP desde la sdcard",
+    char* install_menu_items[] = {  "Elegir ROM desde la sdcard",
                                     NULL,
                                     NULL,
                                     NULL,
@@ -182,11 +182,11 @@ void show_install_rom_menu()
     char *other_sd = NULL;
     if (volume_for_path("/emmc") != NULL) {
         other_sd = "/emmc/";
-        install_menu_items[1] = "Elegir zip desde la SD INTERNA";
+        install_menu_items[1] = "Elegir ROM desde la SD INTERNA";
     }
     else if (volume_for_path("/external_sd") != NULL) {
         other_sd = "/external_sd/";
-        install_menu_items[1] = "Elegir zip desde la SD EXTERNA";
+        install_menu_items[1] = "Elegir ROM desde la SD EXTERNA";
     }
     
     for (;;)
@@ -409,6 +409,7 @@ char* choose_file_menu(const char* directory, const char* fileExtensionOrDirecto
 
 void show_choose_zip_menu(const char *mount_point)
 {
+    ensure_path_mounted("/emmc");
     if (ensure_path_mounted(mount_point) != 0) {
         LOGE ("No es posible montar %s\n", mount_point);
         return;
@@ -429,16 +430,6 @@ void show_choose_zip_menu(const char *mount_point)
         install_zip(file);
 }
 
-void clean_before_rom()
-{
-	if (confirm_selection("BORRAR los datos y la ROM actual?,", "¡¡ SI !!, ¡ voy a instalar una ROM !")) {
-	wipe_data(0);
-	ui_print("Borrando /system ...\n");
-	erase_volume("/system");
-	ui_print("Borrando /preload ...\n");
-	erase_volume("/preload");
-}
-}
 
 void show_choose_ROM_menu(const char *mount_point)
 {
@@ -1648,5 +1639,9 @@ int verify_root_and_recovery() {
     ensure_path_unmounted("/system");
     return ret;
 }
+
+ 
+
+
 
 
