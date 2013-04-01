@@ -918,7 +918,7 @@ main(int argc, char **argv) {
         prompt_and_wait();
     }
 
-    verify_root_and_recovery();
+    //verify_root_and_recovery();
 
     // If there is a radio image pending, reboot now to install it.
     maybe_install_firmware_update(send_intent);
