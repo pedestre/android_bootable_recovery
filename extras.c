@@ -279,7 +279,16 @@ void show_crt_menu() {
     switch (chosen_item) {
         case 0:    
 	    if (file){
+		fclose(file);
+		if( remove( "/data/.enable_crt" ) != 0 ) {
+		    ui_print( "Error Borrando Fichero" );
+		}
+		else {
+		FILE *file2 = fopen("/data/.enable_crt", "w");
+	    	fprintf(file2, "%s", "50");
+	    	fclose(file2);
 		ui_print( "Efecto crt-off habilitado\n" );
+	    	}
 	    }
 	    else {
 		FILE *file2 = fopen("/data/.enable_crt", "w");
