@@ -303,7 +303,13 @@ finish_recovery(const char *send_intent) {
 erase_volume(const char *volume) {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
-    ui_print("Formateando %s...\n", volume);
+	if (idiom==0){
+		ui_print("Formatting %s...\n", volume);
+	}
+	else{
+		ui_print("Formateando %s...\n", volume);
+	}
+    
 
     if (strcmp(volume, "/cache") == 0) {
         // Any part of the log we'd copied to cache is now gone.
@@ -508,6 +514,11 @@ update_directory(const char* path, const char* unmount_when_done) {
                                    path,
                                    "",
                                    NULL };
+	if (idiom==0){
+		MENU_HEADERS[0] = "Choose a package to install:";
+	}
+								   
+								  
     DIR* d;
     struct dirent* de;
     d = opendir(path);
@@ -599,8 +610,13 @@ update_directory(const char* path, const char* unmount_when_done) {
             strlcpy(new_path, path, PATH_MAX);
             strlcat(new_path, "/", PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
-
-            ui_print("\n-- Instalar %s ...\n", path);
+			if (idiom==0){
+				ui_print("\n-- Install %s ...\n", path);
+			}
+			else{
+				ui_print("\n-- Instalar %s ...\n", path);
+			}
+            
             set_sdcard_update_bootloader_message();
             char* copy = copy_sideloaded_package(new_path);
             if (unmount_when_done != NULL) {
@@ -633,12 +649,17 @@ wipe_data(int confirm) {
         static char** title_headers = NULL;
 
         if (title_headers == NULL) {
-            char* headers[] = { "Confirmar el borrado Datos usuario?",
+            char* headers[] = { "¿Confirmar el borrado Datos usuario?",
                                 "  NO SERA POSIBLE DESHACER",
                                 "",
                                 NULL };
-            title_headers = prepend_title((const char**)headers);
-        }
+		if (idiom==0){
+			headers[0] = "Confirm wipe of all user data?";
+			headers[1] = "  THIS CAN NOT BE UNDONE.";
+			}
+            	title_headers = prepend_title((const char**)headers);
+	}
+        
 
         char* items[] = { " No",
                           " No",
@@ -652,14 +673,37 @@ wipe_data(int confirm) {
                           " No",
                           " No",
                           NULL };
+		
+		if (idiom==0){
+			items[0] = " No";
+			items[1] = " No";
+			items[2] = " No";
+			items[3] = " No";
+			items[4] = " No";
+			items[5] = " No";
+			items[6] = " No";
+			items[7] = " Yes -- delete all user data";   // [7]
+			items[8] = " No";
+			items[9] = " No";
+			items[10] = " No";
+			items[11] = NULL;
+		}
 
+	
+		
         int chosen_item = get_menu_selection(title_headers, items, 1, 0);
         if (chosen_item != 7) {
             return;
         }
     }
-
-    ui_print("\n-- Borrando Datos...\n");
+	
+	if (idiom==0){
+		ui_print("\n-- Wiping Data...\n");	
+	}
+	else{
+		ui_print("\n-- Borrando Datos...\n");
+	}
+    
     device_wipe_data();
     erase_volume("/data");
     erase_volume("/cache");
@@ -668,7 +712,13 @@ wipe_data(int confirm) {
     }
     erase_volume("/sd-ext");
     erase_volume("/sdcard/.android_secure");
-    ui_print("Borrado de Datos completo.\n");
+	if (idiom==0){
+		ui_print("Data wipe complete.\n");
+	}
+	else{
+		ui_print("Borrado de Datos completo.\n");
+	}
+    
 }
 
 int ui_menu_level = 1;
@@ -685,6 +735,7 @@ prompt_and_wait() {
         // ui_menu_level is a legacy variable that i am keeping around to prevent build breakage.
         ui_menu_level = 0;
         // allow_display_toggle = 1;
+	    load_initial_menu();
         int chosen_item = get_menu_selection(headers, MENU_ITEMS, 0, 0);
         ui_menu_level = 1;
         ui_root_menu = 0;
@@ -696,6 +747,8 @@ prompt_and_wait() {
         chosen_item = device_perform_action(chosen_item);
 
         int status;
+	    char* cartel1;
+		char* cartel2;
         switch (chosen_item) {
             case ITEM_REBOOT:
                 poweroff=0;
@@ -706,15 +759,29 @@ prompt_and_wait() {
                 if (!ui_text_visible()) return;
                 break;
 
-            case ITEM_WIPE_CACHE:
-                if (confirm_selection("Confirma el Borrado?", "Si - Borrar Cache y Dalvik"))
+            case ITEM_WIPE_CACHE:	
+		if (idiom==0){
+			cartel1="Confirm Wipe?";
+			cartel2="Yes - Wipe Cache and Dalvik";
+		}
+		else{
+			cartel1="Confirma el Borrado?";
+			cartel2="Si - Borrar Cache y Dalvik";
+		}
+                if (confirm_selection(cartel1,cartel2))
                 {
                     ui_print("\n-- Wiping cache...\n");
                     erase_volume("/cache");
 					__system("rm -r /data/dalvik-cache");
                     __system("rm -r /cache/dalvik-cache");
                     __system("rm -r /sd-ext/dalvik-cache");
-                    ui_print("Borrado de Cache y Dalvik completado.\n");
+                    
+					if (idiom==0){
+						ui_print("Cache and Dalvik Wipe complete.\n");
+					}
+					else{
+						ui_print("Borrado de Cache y Dalvik completado.\n");
+					}
                     if (!ui_text_visible()) return;
                 }
                 break;
@@ -874,16 +941,38 @@ main(int argc, char **argv) {
 
     if (update_package != NULL) {
         status = install_package(update_package);
-        if (status != INSTALL_SUCCESS) ui_print("Instalacion Abortada.\n");
+        if (status != INSTALL_SUCCESS) {
+			if (idiom==0){
+				ui_print("Installation aborted.\n");
+			}
+			else{
+				ui_print("Instalacion Abortada.\n");
+			}
+			
+		}
     } else if (wipe_data) {
         if (device_wipe_data()) status = INSTALL_ERROR;
         if (erase_volume("/data")) status = INSTALL_ERROR;
         if (has_datadata() && erase_volume("/datadata")) status = INSTALL_ERROR;
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (status != INSTALL_SUCCESS) ui_print("Fallo el Borrado de Datos.\n");
+        if (status != INSTALL_SUCCESS) {
+			if (idiom==0){
+				ui_print("Data wipe failed.\n");
+			}
+			else{
+				ui_print("Fallo el Borrado de Datos.\n");
+			}
+		}
     } else if (wipe_cache) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (status != INSTALL_SUCCESS) ui_print("Fallo el Borrado de la Cache.\n");
+        if (status != INSTALL_SUCCESS) {
+			if (idiom==0){
+				ui_print("Cache wipe failed.\n");
+			}
+			else{
+				ui_print("Fallo el Borrado de la Cache.\n");
+			}
+		}
     } else {
         LOGI("Checking for extendedcommand...\n");
         status = INSTALL_ERROR;  // No command specified
@@ -928,11 +1017,22 @@ main(int argc, char **argv) {
 
     sync();
     if(!poweroff) {
-        ui_print("Reiniciando...\n");
+		if (idiom==0){
+			ui_print("Rebooting...\n");
+		}
+		else{
+			ui_print("Reiniciando...\n");
+		}
+        
         android_reboot(ANDROID_RB_RESTART, 0, 0);
     }
     else {
-        ui_print("Apagando...\n");
+        if (idiom==0){
+			ui_print("Shutting down...\n");
+		}
+		else{
+			ui_print("Apagando...\n");
+		}
         android_reboot(ANDROID_RB_POWEROFF, 0, 0);
     }
     return EXIT_SUCCESS;

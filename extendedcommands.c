@@ -89,12 +89,21 @@ void
 toggle_signature_check()
 {
     signature_check_enabled = !signature_check_enabled;
-    ui_print("Comprobacion Firma: %s\n", signature_check_enabled ? "Habilitada" : "Deshabilitada");
+	if (idiom==0){
+		ui_print("Signature check: %s\n", signature_check_enabled ? "Enable" : "Disable");
+	}else{
+		ui_print("Comprobacion Firma: %s\n", signature_check_enabled ? "Habilitada" : "Deshabilitada");
+	}
 }
 
 int install_zip(const char* packagefilepath)
 {
-    ui_print("\n-- Instalando: %s\n", packagefilepath);
+	if (idiom==0){
+		ui_print("\n-- Installing: %s\n", packagefilepath);
+	}else{
+		ui_print("\n-- Instalando: %s\n", packagefilepath);
+	}
+    
     if (device_flash_type() == MTD) {
         set_sdcard_update_bootloader_message();
     }
@@ -102,11 +111,21 @@ int install_zip(const char* packagefilepath)
     ui_reset_progress();
     if (status != INSTALL_SUCCESS) {
         ui_set_background(BACKGROUND_ICON_ERROR);
-        ui_print("Instalacion Abortada.\n");
+		if (idiom==0){
+			ui_print("Isntallation aborted.\n");
+		}else{
+			ui_print("Instalacion Abortada.\n");
+		}
+        
         return 1;
     }
     ui_set_background(BACKGROUND_ICON_CLOCKWORK);
-    ui_print("\nInstalacion desde la sd completa.\n");
+	if (idiom==0){
+		ui_print("\Installation from sd complete.\n");
+	}else{
+		ui_print("\nInstalacion desde la sd completa.\n");
+	}
+    
     return 0;
 }
 
@@ -117,25 +136,47 @@ int install_zip(const char* packagefilepath)
 
 void show_install_update_menu()
 {
-    static char* headers[] = {  "Aplicando update desde .zip",
+    static char* headers[] = {  "",
                                 "",
                                 NULL
     };
     
-    char* install_menu_items[] = {  "Elegir ZIP desde la sdcard",
-                                    "Aplicar /sdcard/update.zip",
-                                    "Verificacion de firma",
+    char* install_menu_items[] = {  "",
+                                    "",
+                                    "",
                                     NULL,
                                     NULL };
+	
+	if (idiom==0){
+		headers[0] = "Apply update from .zip file";
 
+		install_menu_items[0] = "Choose Zip file from sdcard";
+        install_menu_items[1] = "Apply /sdcard/update.zip";
+		install_menu_items[2] = "Toggle Signature Verification";
+	}else{
+		headers[0] = "Aplicar update desde .zip";
+
+		install_menu_items[0] = "Elegir ZIP desde la sdcard";
+        install_menu_items[1] = "Aplicar /sdcard/update.zip";
+		install_menu_items[2] = "Verificacion de firma";
+	}
     char *other_sd = NULL;
     if (volume_for_path("/emmc") != NULL) {
         other_sd = "/emmc/";
-        install_menu_items[3] = "Elegir zip desde la SD INTERNA";
+		if (idiom==0){
+			install_menu_items[3] = "Choose Zip file from INTERNAL SD";
+		}else{
+			install_menu_items[3] = "Elegir zip desde la SD INTERNA";
+		}
+        
     }
     else if (volume_for_path("/external_sd") != NULL) {
         other_sd = "/external_sd/";
-        install_menu_items[3] = "Elegir zip desde la SD EXTERNA";
+        if (idiom==0){
+			install_menu_items[3] = "Choose Zip file from EXTERNAL SD";
+		}else{
+			install_menu_items[3] = "Elegir zip desde la SD EXTERNA";
+		}
     }
     
     for (;;)
@@ -148,8 +189,13 @@ void show_install_update_menu()
                 break;
             case ITEM_APPLY_SDCARD:
             {
+				if (idiom==0){
+					if (confirm_selection("¿Confirm Installation?", "Yes - Install /sdcard/update.zip"))
+                    install_zip(SDCARD_UPDATE_FILE);
+				}else{
                 if (confirm_selection("¿Confirma la Instalacion?", "Si - Instalar /sdcard/update.zip"))
                     install_zip(SDCARD_UPDATE_FILE);
+				}
                 break;
             }
             case ITEM_CHOOSE_ZIP:
@@ -168,8 +214,10 @@ void show_install_update_menu()
 
 void show_install_rom_menu()
 {
-    static char* headers[] = {  "OJOOO INSTALANDO ROM DESDE .zip",
-                                "",
+    static char* headers[] = {  "OJOOO: INSTALANDO",
+				"ROM DESDE .zip",
+                                "Wipe data Incluido",
+				"",
                                 NULL
     };
     
@@ -178,15 +226,34 @@ void show_install_rom_menu()
                                     NULL,
                                     NULL,
                                     NULL };
-
+	if (idiom==0){
+		headers[0] ="BE CAREFUL: Installing";
+		headers[1] ="a new ROM from Zip file";
+		headers[2] ="WIPE DATA Included";
+		install_menu_items[0] = "Choose ROM from sdcard";
+	}else{
+		headers[0] ="OJOOO: INSTALANDO";
+		headers[1] ="ROM DESDE .zip";
+		headers[2] ="WIPE DATA Incluido";
+		install_menu_items[0] = "Elegir ROM desde la sdcard";
+	}
     char *other_sd = NULL;
     if (volume_for_path("/emmc") != NULL) {
         other_sd = "/emmc/";
-        install_menu_items[1] = "Elegir ROM desde la SD INTERNA";
+		if (idiom==0){
+			install_menu_items[1] = "Choose ROM from INTERNAL sd";
+		}else{
+			install_menu_items[1] = "Elegir ROM desde la SD INTERNA";
+		}
+        
     }
     else if (volume_for_path("/external_sd") != NULL) {
         other_sd = "/external_sd/";
-        install_menu_items[1] = "Elegir ROM desde la SD EXTERNA";
+        if (idiom==0){
+			install_menu_items[1] = "Choose ROM from EXTERNAL sd";
+		}else{
+			install_menu_items[1] = "Elegir ROM desde la SD EXTERNA";
+		}
     }
     
     for (;;)
@@ -239,7 +306,12 @@ char** gather_files(const char* directory, const char* fileExtensionOrDirectory,
 
     dir = opendir(directory);
     if (dir == NULL) {
-        ui_print("No se puede abrir el directorio.\n");
+		if (idiom==0){
+			ui_print("Couldn't open directory %s\n", directory);
+		}else{
+			ui_print("No se puede abrir el directorio %s\n", directory);
+		}
+        
         return NULL;
     }
 
@@ -359,7 +431,12 @@ char* choose_file_menu(const char* directory, const char* fileExtensionOrDirecto
     int total = numDirs + numFiles;
     if (total == 0)
     {
-        ui_print("No files found.\n");
+		if (idiom==0){
+			ui_print("No files found.\n");
+		}else{
+			ui_print("No se encontraron ficheros.\n");
+		}
+        
     }
     else
     {
@@ -419,13 +496,27 @@ void show_choose_zip_menu(const char *mount_point)
                                 "",
                                 NULL
     };
-
+	if (idiom==0){
+		headers[0] = "Choose a Zip to apply";
+	}else{
+		headers[0] = "Elegir un zip a aplicar";
+	}
     char* file = choose_file_menu(mount_point, ".zip", headers);
     if (file == NULL)
         return;
     static char* confirm_install  = "¿Confirma la Instalacion?";
+	if (idiom==0){
+		confirm_install  = "Confirm install?";
+	}else{
+		confirm_install  = "¿Confirma la Instalacion?";
+	}
     static char confirm[PATH_MAX];
-    sprintf(confirm, "Si - Instalar %s", basename(file));
+	if (idiom==0){
+		sprintf(confirm, "Yes - Install %s", basename(file));
+	}else{
+		sprintf(confirm, "Si - Instalar %s", basename(file));
+	}
+    
     if (confirm_selection(confirm_install, confirm))
         install_zip(file);
 }
@@ -442,22 +533,54 @@ void show_choose_ROM_menu(const char *mount_point)
                                 "",
                                 NULL
     };
-	
+	if (idiom==0){
+		headers[0] = "Choose ROM Zip";
+	}else{
+		headers[0] = "Elegir el zip de la ROM";
+	}
 	
 	
     char* file = choose_file_menu(mount_point, ".zip", headers);
     if (file == NULL)
         return;
     static char* confirm_install  = "¿BORRAR DATOS e INSTALAR la ROM ?";
+	if (idiom==0){
+		confirm_install  = "¿Wipe data and Install ROM?";
+	}else{
+		confirm_install  = "¿BORRAR DATOS e INSTALAR la ROM ?";
+	}
     static char confirm[PATH_MAX];
-    sprintf(confirm, "Si - BORRAR DATOS e Instalar %s ", basename(file));
+	if (idiom==0){
+		sprintf(confirm, "Yes - Wipe Data and Install %s ", basename(file));
+	}else{
+		sprintf(confirm, "Si - BORRAR DATOS e Instalar %s ", basename(file));
+	}
+    
     if (confirm_selection(confirm_install, confirm))
-		wipe_data(0);
-		ui_print("Borrando /system ...\n");
-		erase_volume("/system");
-		ui_print("Borrando /preload ...\n");
-		erase_volume("/preload");
-        install_zip(file);
+		
+		if (idiom==0){
+			ui_print("Wiping data ...\n");
+			wipe_data(0);
+			ui_print("Wiping /system ...\n");
+			erase_volume("/system");
+			ui_print("Wiping /preload ...\n");
+			erase_volume("/preload");
+			ui_print("Installing ROM ...\n");
+			install_zip(file);
+		}else{
+			ui_print("Haciendo el Wipe data ...\n");
+			wipe_data(0);
+			ui_print("Borrando /system ...\n");
+			wipe_data(0);
+			ui_print("Borrando /system ...\n");
+			erase_volume("/system");
+			ui_print("Borrando /preload ...\n");
+			erase_volume("/preload");
+			ui_print("Instalando ROM ...\n");
+			install_zip(file);
+		}
+		
+		
 }
 
 void show_nandroid_restore_menu(const char* path)
@@ -471,15 +594,27 @@ void show_nandroid_restore_menu(const char* path)
                                 "",
                                 NULL
     };
-
+	
+	if (idiom==0){
+		headers[0] = "Choose an image to restore";
+	}else{
+		headers[0] = "Elegir imagen para Restaurar";
+	}
+	
     char tmp[PATH_MAX];
     sprintf(tmp, "%s/clockworkmod/backup/", path);
     char* file = choose_file_menu(tmp, NULL, headers);
     if (file == NULL)
         return;
-
-    if (confirm_selection("¿Confirma la Restauracion?", "Si - Restaurar"))
+	
+	if (idiom==0){
+		if (confirm_selection("Confirm restore?", "Yes - Restore"))
         nandroid_restore(file, 1, 1, 1, 1, 1, 0);
+	}else{
+		if (confirm_selection("¿Confirma la Restauracion?", "Si - Restaurar"))
+        nandroid_restore(file, 1, 1, 1, 1, 1, 0);
+	}
+    
 }
 
 void show_nandroid_delete_menu(const char* path)
@@ -493,18 +628,31 @@ void show_nandroid_delete_menu(const char* path)
                                 "",
                                 NULL
     };
-
+	
+	if (idiom==0){
+		headers[0] = "Choose an image to delete";
+	}else{
+		headers[0] = "Elegir una imagen para Borrar";
+	}
+	
     char tmp[PATH_MAX];
     sprintf(tmp, "%s/clockworkmod/backup/", path);
     char* file = choose_file_menu(tmp, NULL, headers);
     if (file == NULL)
         return;
-
-    if (confirm_selection("¿Confirma el Borrado?", "Si - Borrar")) {
-        // nandroid_restore(file, 1, 1, 1, 1, 1, 0);
+		
+	if (idiom==0){
+		if (confirm_selection("¿Confirm delete?", "Yes - Delete")) {
         sprintf(tmp, "rm -rf %s", file);
         __system(tmp);
-    }
+		}
+	}else{
+		if (confirm_selection("¿Confirma el Borrado?", "Si - Borrar")) {
+        sprintf(tmp, "rm -rf %s", file);
+        __system(tmp);
+		}
+	}
+    
 }
 
 #define MAX_NUM_USB_VOLUMES 3
@@ -654,7 +802,22 @@ void show_mount_usb_storage_menu()
     };
 
     static char* list[] = { "Desmontar", NULL };
-
+	
+	if (idiom==0){
+		headers[0] = "USB mass storage unit";
+		headers[1] = "Leaving this menu unmounts";
+		headers[2] = "your SD card from your PC.";
+		
+		list[0] = "Unmount";
+	}
+	else{
+		headers[0] = "Unidad de Almacenamiento Masivo USB";
+		headers[1] = "Abandonando este menu se ";
+		headers[2] = "desmontara su SD card de su PC";
+		
+		list[0] = "Desmontar";
+	}
+	
     for (;;)
     {
         int chosen_item = get_menu_selection(headers, list, 0, 0);
@@ -671,8 +834,19 @@ int confirm_selection(const char* title, const char* confirm)
     struct stat info;
     if (0 == stat("/sdcard/clockworkmod/.no_confirm", &info))
         return 1;
-
-    char* confirm_headers[]  = {  title, "NO SERA POSIBLE DESHACER.", "", NULL };
+	char* confirm_headers[]  = {  title, 
+								"NO SERA POSIBLE DESHACER.",
+								"", 
+								NULL };
+	
+	if (idiom==0){
+		confirm_headers[1]="THIS CAN NOT BE UNDONE.";
+	}
+	else{
+		confirm_headers[1]="NO SERA POSIBLE DESHACER.";
+	}
+	
+    
     if (0 == stat("/emmc/clockworkmod/.one_confirm", &info)) {
         char* items[] = { "No",
                         confirm, //" Yes -- wipe partition",   // [1]
@@ -800,7 +974,13 @@ int format_unknown_device(const char *device, const char* path, const char *fs_t
         Volume *vol = volume_for_path("/sd-ext");
         if (vol == NULL || 0 != stat(vol->device, &st))
         {
-            ui_print("Ninguna particion app2sd encontrada. Se omite el formato de /sd-ext.\n");
+			/*if (idiom==0){
+				ui_print("No app2sd partition  found. Skipping format /sd-ext.\n");
+			}
+			else{
+				ui_print("Ninguna particion app2sd encontrada. Se omite el formato de /sd-ext.\n");
+			}*/
+            
             return 0;
         }
     }
@@ -827,8 +1007,14 @@ int format_unknown_device(const char *device, const char* path, const char *fs_t
 
     if (0 != ensure_path_mounted(path))
     {
-        ui_print("Error montando %s!\n", path);
-        ui_print("Se omite el formateo...\n");
+		if (idiom==0){
+			ui_print("Error mounting %s!\n", path);
+			ui_print("Skipping format...\n");
+		}
+		else{
+			ui_print("Error montando %s!\n", path);
+			ui_print("Se omite el formateo...\n");
+		}
         return 0;
     }
 
@@ -887,7 +1073,17 @@ void show_partition_menu()
                                 "/emmc   -> sd INTERNA",
 				NULL
     };
-
+	
+	if (idiom==0){
+		headers[0] = "Mounts and Storage";
+		headers[1] = "/sdcard is the EXTERNAL SD";
+		headers[2] = "/emmc   is the INTERNAL SD";
+	}
+	else{
+		headers[0] = "Menu Montaje y Almacenamiento";
+		headers[1] = "/sdcard es la sd EXTERNA";
+		headers[2] = "/emmc   es la sd INTERNA";
+	}
     static MountMenuEntry* mount_menu = NULL;
     static FormatMenuEntry* format_menu = NULL;
 
@@ -917,7 +1113,19 @@ void show_partition_menu()
 	    /*if(strcmp(v->mount_point,"emmc") == 0) {
 	 	sprintf(&mount_menu[mountable_volumes].mount, "Montar SD INTERNA");
 	    }*/
-	    sprintf(&mount_menu[mountable_volumes].mount, "Montar %s", v->mount_point);
+		if (idiom==0){
+			sprintf(&mount_menu[mountable_volumes].mount, "Mount %s", v->mount_point);
+            sprintf(&mount_menu[mountable_volumes].unmount, "Unmount %s", v->mount_point);
+            mount_menu[mountable_volumes].v = &device_volumes[i];
+            ++mountable_volumes;
+            if (is_safe_to_format(v->mount_point)) {
+                sprintf(&format_menu[formatable_volumes].txt, "Format %s", v->mount_point);
+                format_menu[formatable_volumes].v = &device_volumes[i];
+                ++formatable_volumes;
+            }
+		}
+		else{
+			sprintf(&mount_menu[mountable_volumes].mount, "Montar %s", v->mount_point);
             sprintf(&mount_menu[mountable_volumes].unmount, "Desmontar %s", v->mount_point);
             mount_menu[mountable_volumes].v = &device_volumes[i];
             ++mountable_volumes;
@@ -926,17 +1134,37 @@ void show_partition_menu()
                 format_menu[formatable_volumes].v = &device_volumes[i];
                 ++formatable_volumes;
             }
+		}
+		
+	    
         }
         else if (strcmp("ramdisk", v->fs_type) != 0 && strcmp("mtd", v->fs_type) == 0 && is_safe_to_format(v->mount_point))
         {
-            sprintf(&format_menu[formatable_volumes].txt, "Formatear %s", v->mount_point);
-            format_menu[formatable_volumes].v = &device_volumes[i];
-            ++formatable_volumes;
+			if (idiom==0){
+				sprintf(&format_menu[formatable_volumes].txt, "Format %s", v->mount_point);
+				format_menu[formatable_volumes].v = &device_volumes[i];
+				++formatable_volumes;
+			}
+			else{
+				sprintf(&format_menu[formatable_volumes].txt, "Formatear %s", v->mount_point);
+				format_menu[formatable_volumes].v = &device_volumes[i];
+				++formatable_volumes;
+			}
+            
         }
     }
 
     static char* confirm_format  = "¿Confirmar formatear?";
     static char* confirm = "Si - Formatear";
+	if (idiom==0){
+		confirm_format  = "Confirm format?";
+		confirm = "Yes - Format";
+	}
+	else{
+		confirm_format  = "¿Confirmar formatear?";
+		confirm = "Si - Formatear";
+	}
+	
     char confirm_string[255];
 
     for (;;)
@@ -959,7 +1187,13 @@ void show_partition_menu()
         }
 
         if (!is_data_media()) {
-          options[mountable_volumes + formatable_volumes] = "Montar Almacenamiento Masivo USB";
+		if (idiom==0){
+			options[mountable_volumes + formatable_volumes] = "Mount USB mass Storage";
+		}
+		else{
+			options[mountable_volumes + formatable_volumes] = "Montar Almacenamiento Masivo USB";
+		}
+          
           options[mountable_volumes + formatable_volumes + 1] = NULL;
         }
         else {
@@ -978,13 +1212,27 @@ void show_partition_menu()
 
             if (is_path_mounted(v->mount_point))
             {
-                if (0 != ensure_path_unmounted(v->mount_point))
-                    ui_print("Error desmontando %s!\n", v->mount_point);
+                if (0 != ensure_path_unmounted(v->mount_point)){
+					if (idiom==0){
+						ui_print("Error unmounting %s!\n", v->mount_point);
+					}
+					else{
+						ui_print("Error desmontando %s!\n", v->mount_point);
+					}
+		}
+                    
             }
             else
             {
-                if (0 != ensure_path_mounted(v->mount_point))
-                    ui_print("Error montando %s!\n",  v->mount_point);
+                if (0 != ensure_path_mounted(v->mount_point)){
+					if (idiom==0){
+						ui_print("Error unmounting %s!\n", v->mount_point);
+					}
+					else{
+						ui_print("Error montando %s!\n",  v->mount_point);
+					}
+		}
+                    
             }
         }
         else if (chosen_item < (mountable_volumes + formatable_volumes))
@@ -997,11 +1245,21 @@ void show_partition_menu()
 
             if (!confirm_selection(confirm_string, confirm))
                 continue;
-            ui_print("Formateando %s...\n", v->mount_point);
-            if (0 != format_volume(v->mount_point))
-                ui_print("Error formateando %s!\n", v->mount_point);
-            else
-                ui_print("Hecho.\n");
+		if (idiom==0){
+			ui_print("Formatting %s...\n", v->mount_point);
+			if (0 != format_volume(v->mount_point))
+				ui_print("Error formatting %s!\n", v->mount_point);
+			else
+				ui_print("Done.\n");
+		}
+		else{
+			ui_print("Formateando %s...\n", v->mount_point);
+			if (0 != format_volume(v->mount_point))
+				ui_print("Error formateando %s!\n", v->mount_point);
+			else
+				ui_print("Hecho.\n");
+		}
+            
         }
     }
 
@@ -1024,7 +1282,22 @@ void show_nandroid_advanced_restore_menu(const char* path)
                                 "",
                                 NULL
     };
-
+	
+	if (idiom==0){
+		advancedheaders[0] = "Choosing image to restore";
+		advancedheaders[1] = "";
+		advancedheaders[2] = "Choose image to restore";
+		advancedheaders[3] = "first. The next menu will";
+		advancedheaders[4] = "show you more options.";
+	}
+	else{
+		advancedheaders[0] = "Elegir imagen para Restaurar";
+		advancedheaders[1] = "";
+		advancedheaders[2] = "Elegir imagen para Restaurar.";
+		advancedheaders[3] = "En el siguiente menu";
+		advancedheaders[4] = "tendra mas opciones.";
+	}
+	
     char tmp[PATH_MAX];
     sprintf(tmp, "%s/clockworkmod/backup/", path);
     char* file = choose_file_menu(tmp, NULL, advancedheaders);
@@ -1040,18 +1313,45 @@ void show_nandroid_advanced_restore_menu(const char* path)
                             "Restaurar system y preload",
                             "Restaurar data",
                             "Restaurar cache",
-                            "Restaurar sd-ext",
-                            "Restaurar wimax",
+                            NULL,
+                            NULL,
                             NULL
     };
     
+	if (idiom==0){
+		headers[0] = "Advanced restore";
+		
+		list[0] = "Restore boot";
+		list[1] = "Restore system and preload";
+		list[2] = "Restore data";
+		list[3] = "Restore cache";
+		//list[4] = "Restaurar sd-ext";
+		//list[5] = "Restaurar wimax";
+	}
+	else{
+		headers[0] = "Restauracion Avanzada";
+		
+		list[0] = "Restaurar boot";
+		list[1] = "Restaurar system y preload";
+		list[2] = "Restaurar data";
+		list[3] = "Restaurar cache";
+		//list[4] = "Restaurar sd-ext";
+		//list[5] = "Restaurar wimax";
+	}
+	
     if (0 != get_partition_device("wimax", tmp)) {
         // disable wimax restore option
         list[5] = NULL;
     }
 
     static char* confirm_restore  = "Confirmar Restauracion?";
-
+	if (idiom==0){
+		confirm_restore  = "Confirm restore?";
+	}
+	else{
+		confirm_restore  = "Confirmar Restauracion?";
+	}
+	
     int chosen_item = get_menu_selection(headers, list, 0, 0);
     switch (chosen_item)
     {
@@ -1094,11 +1394,16 @@ static void run_dedupe_gc(const char* other_sd) {
 }
 
 static void choose_backup_format() {
-    static char* headers[] = {  "Formato de Backups (para esta sesion)",
+    static char* headers[] = {  "Formato de Backups",
                                 "",
                                 NULL
     };
-
+	if (idiom==0){
+		headers[0] = "Default Backups format";
+	}
+	else{
+		headers[0] = "Formato de Backups por defecto";
+	}
     char* list[] = { "dup",
         "tar", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
     };
@@ -1107,11 +1412,22 @@ static void choose_backup_format() {
     switch (chosen_item) {
         case 0:
             write_string_to_file(NANDROID_BACKUP_FORMAT_FILE, "dup");
-            ui_print("Tipo de Backup establecido a dedupe.\n");
+			if (idiom==0){
+				ui_print("Backup format set to dedupe.\n");
+			}
+			else{
+				ui_print("Tipo de Backup establecido a dedupe.\n");
+			}
+            
             break;
         case 1:
             write_string_to_file(NANDROID_BACKUP_FORMAT_FILE, "tar");
-            ui_print("Tipo de Backup establecido a tar.\n");
+            if (idiom==0){
+				ui_print("Backup format set to tar.\n");
+			}
+			else{
+				ui_print("Tipo de Backup establecido a tar.\n");
+			}
             break;
     }
 }
@@ -1137,21 +1453,60 @@ void show_nandroid_menu()
                             NULL,
                             NULL
     };
-
+	
+	if (idiom==0){
+		headers[0] = "Backup and Restore";
+		
+		list[0] = "Backup";
+		list[1] = "Restore";
+		list[2] = "Delete";
+		list[3] = "Advanced Restore";
+		list[4] = "Free Unused Backup Data";
+		list[5] = "Choose Default Backup Format";
+	}
+	else{
+		headers[0] = "Copia Seguridad-Restauracion";
+		
+		list[0] = "Hacer Copia de Seguridad";
+		list[1] = "Restaurar";
+		list[2] = "Borrar copia";
+		list[3] = "Restauracion Avanzada";
+		list[4] = "Liberar espacio de copias no usadas";
+		list[5] = "Elegir formato de Copia de Seguridad";
+	}
+	
     char *other_sd = NULL;
     if (volume_for_path("/emmc") != NULL) {
         other_sd = "/emmc";
-        list[6] = "Copia de seguridad a la  SD INTERNA";
-        list[7] = "Restaurar desde la  SD INTERNA";
-        list[8] = "Restauracion avanzada desde la SD INTERNA";
-        list[9] = "Borrar Copia desde la  SD INTERNA,";
+		if (idiom==0){
+			list[6] = "Backup to INTERNAL SD";
+			list[7] = "Restore from INTERNAL SD";
+			list[8] = "Advanced Restore from INTERNAL SD";
+			list[9] = "Delete backup from INTERNAL SD";
+		}
+		else{
+			list[6] = "Copia de seguridad a la  SD INTERNA";
+			list[7] = "Restaurar desde la  SD INTERNA";
+			list[8] = "Restauracion avanzada desde la SD INTERNA";
+			list[9] = "Borrar Copia desde la  SD INTERNA";
+		}
+        
     }
     else if (volume_for_path("/external_sd") != NULL) {
         other_sd = "/external_sd";
-        list[6] = "Copia de seguridad a la SD EXTERNA";
-        list[7] = "Restaurar desde la SD EXTERNA";
-        list[8] = "Restauracion avanzada desde la SD EXTERNA";
-        list[9] = "Borrar desde la SD EXTERNA";
+		if (idiom==0){
+			list[6] = "Backup to EXTERNAL SD";
+			list[7] = "Restore from EXTERNAL SD";
+			list[8] = "Advanced Restore from EXTERNAL SD";
+			list[9] = "Delete backup from EXTERNAL SD";
+		}
+		else{
+			list[6] = "Copia de seguridad a la SD EXTERNA";
+			list[7] = "Restaurar desde la SD EXTERNA";
+			list[8] = "Restauracion avanzada desde la SD EXTERNA";
+			list[9] = "Borrar desde la SD EXTERNA";
+		}
+        
     }
 #ifdef RECOVERY_EXTEND_NANDROID_MENU
     extend_nandroid_menu(list, 10, sizeof(list) / sizeof(char*));
@@ -1165,23 +1520,44 @@ void show_nandroid_menu()
         {
             case 0:
                 {
-		if (confirm_selection( "Confirmar Hacer Backup?", "Si - Hacer la copia")) 
-			{
-		            char backup_path[PATH_MAX];
-		            time_t t = time(NULL);
-		            struct tm *tmp = localtime(&t);
-		            if (tmp == NULL)
-		            {
-		                struct timeval tp;
-		                gettimeofday(&tp, NULL);
-		                sprintf(backup_path, "/sdcard/clockworkmod/backup/%d", tp.tv_sec);
-		            }
-		            else
-		            {
-		                strftime(backup_path, sizeof(backup_path), "/sdcard/clockworkmod/backup/%F.%H.%M.%S", tmp);
-		            }
-		            nandroid_backup(backup_path);
-			}
+					if (idiom==0){
+						if (confirm_selection( "Confirm Backup?", "Yes - Backup")) 
+						{
+								char backup_path[PATH_MAX];
+								time_t t = time(NULL);
+								struct tm *tmp = localtime(&t);
+								if (tmp == NULL)
+								{
+									struct timeval tp;
+									gettimeofday(&tp, NULL);
+									sprintf(backup_path, "/sdcard/clockworkmod/backup/%d", tp.tv_sec);
+								}
+								else
+								{
+									strftime(backup_path, sizeof(backup_path), "/sdcard/clockworkmod/backup/%F.%H.%M.%S", tmp);
+								}
+								nandroid_backup(backup_path);
+						}
+					}
+					else{
+						if (confirm_selection( "Confirmar Hacer Backup?", "Si - Hacer la copia")) 
+						{
+								char backup_path[PATH_MAX];
+								time_t t = time(NULL);
+								struct tm *tmp = localtime(&t);
+								if (tmp == NULL)
+								{
+									struct timeval tp;
+									gettimeofday(&tp, NULL);
+									sprintf(backup_path, "/sdcard/clockworkmod/backup/%d", tp.tv_sec);
+								}
+								else
+								{
+									strftime(backup_path, sizeof(backup_path), "/sdcard/clockworkmod/backup/%F.%H.%M.%S", tmp);
+								}
+								nandroid_backup(backup_path);
+						}
+					}
                 }
                 break;
             case 1:
@@ -1201,37 +1577,71 @@ void show_nandroid_menu()
                 break;
             case 6:
                 {
-			if (confirm_selection( "Confirmar Backup en INTERNA?", "Si - Hacer la copia")) 
-			{
-		            char backup_path[PATH_MAX];
-		            time_t t = time(NULL);
-		            struct tm *timeptr = localtime(&t);
-		            if (timeptr == NULL)
-		            {
-		                struct timeval tp;
-		                gettimeofday(&tp, NULL);
-		                if (other_sd != NULL) {
-		                    sprintf(backup_path, "%s/clockworkmod/backup/%d", other_sd, tp.tv_sec);
-		                }
-		                else {
-		                    break;
-		                }
-		            }
-		            else
-		            {
-		                if (other_sd != NULL) {
-		                    char tmp[PATH_MAX];
-		                    strftime(tmp, sizeof(tmp), "clockworkmod/backup/%F.%H.%M.%S", timeptr);
-		                    // this sprintf results in:
-		                    // /emmc/clockworkmod/backup/%F.%H.%M.%S (time values are populated too)
-		                    sprintf(backup_path, "%s/%s", other_sd, tmp);
-		                }
-		                else {
-		                    break;
-		                }
-			  }
-			  nandroid_backup(backup_path);
-                    }
+					if (idiom==0){
+						if (confirm_selection( "Confirm Backup to INTERNAL SD?", "Yes - Backup")) 
+						{
+								char backup_path[PATH_MAX];
+								time_t t = time(NULL);
+								struct tm *timeptr = localtime(&t);
+								if (timeptr == NULL)
+								{
+									struct timeval tp;
+									gettimeofday(&tp, NULL);
+									if (other_sd != NULL) {
+										sprintf(backup_path, "%s/clockworkmod/backup/%d", other_sd, tp.tv_sec);
+									}
+									else {
+										break;
+									}
+								}
+								else
+								{
+									if (other_sd != NULL) {
+										char tmp[PATH_MAX];
+										strftime(tmp, sizeof(tmp), "clockworkmod/backup/%F.%H.%M.%S", timeptr);
+										// this sprintf results in:
+										// /emmc/clockworkmod/backup/%F.%H.%M.%S (time values are populated too)
+										sprintf(backup_path, "%s/%s", other_sd, tmp);
+									}
+									else {
+										break;
+									}
+								}
+								nandroid_backup(backup_path);
+						}
+					}else{
+						if (confirm_selection( "Confirmar Backup en INTERNA?", "Si - Hacer la copia")) 
+						{
+								char backup_path[PATH_MAX];
+								time_t t = time(NULL);
+								struct tm *timeptr = localtime(&t);
+								if (timeptr == NULL)
+								{
+									struct timeval tp;
+									gettimeofday(&tp, NULL);
+									if (other_sd != NULL) {
+										sprintf(backup_path, "%s/clockworkmod/backup/%d", other_sd, tp.tv_sec);
+									}
+									else {
+										break;
+									}
+								}
+								else
+								{
+									if (other_sd != NULL) {
+										char tmp[PATH_MAX];
+										strftime(tmp, sizeof(tmp), "clockworkmod/backup/%F.%H.%M.%S", timeptr);
+										// this sprintf results in:
+										// /emmc/clockworkmod/backup/%F.%H.%M.%S (time values are populated too)
+										sprintf(backup_path, "%s/%s", other_sd, tmp);
+									}
+									else {
+										break;
+									}
+								}
+								nandroid_backup(backup_path);
+						}
+					}
                     
                 }
                 break;
@@ -1264,12 +1674,24 @@ void wipe_battery_stats()
     ensure_path_mounted("/data");
     remove("/data/system/batterystats.bin");
     ensure_path_unmounted("/data");
-    ui_print("Borradas las estadísticas de la Batería.\n");
+	if (idiom==0){
+		ui_print("Battery Statistics Wiped.\n");
+	}
+	else{
+		ui_print("Borradas las estadisticas de la Bateria.\n");
+	}
+    
 }
 
 static void partition_sdcard(const char* volume) {
     if (!can_partition(volume)) {
-        ui_print("No se puede particionar la unidad: %s\n", volume);
+		if (idiom==0){
+			ui_print("Can't partition unit: %s\n", volume);
+		}
+		else{
+			ui_print("No se puede particionar la unidad: %s\n", volume);
+		}
+        
         return;
     }
 
@@ -1290,7 +1712,14 @@ static void partition_sdcard(const char* volume) {
 
     static char* ext_headers[] = { "Tamaño Ext", "", NULL };
     static char* swap_headers[] = { "Tamaño Swap", "", NULL };
-
+	if (idiom==0){
+		ext_headers[0] ="Ext Size";
+		swap_headers[0] ="Swap Size";
+	}
+	else{
+		ext_headers[0] ="Tamaño Ext";
+		swap_headers[0] ="Tamaño Swap";
+	}
     int ext_size = get_menu_selection(ext_headers, ext_sizes, 0, 0);
     if (ext_size == GO_BACK)
         return;
@@ -1307,11 +1736,29 @@ static void partition_sdcard(const char* volume) {
     char cmd[PATH_MAX];
     setenv("SDPATH", sddevice, 1);
     sprintf(cmd, "sdparted -es %s -ss %s -efs ext3 -s", ext_sizes[ext_size], swap_sizes[swap_size]);
-    ui_print("Particionando SD Card...espere por favor...\n");
+	if (idiom==0){
+		ui_print("Partitioning SD Card...wait please...\n");
+	}
+	else{
+		ui_print("Particionando SD Card...espere por favor...\n");
+	}
+    
     if (0 == __system(cmd))
-        ui_print("Hecho!\n");
+		if (idiom==0){
+			ui_print("Done!\n");
+		}
+		else{
+			ui_print("Hecho!\n");
+		}
+        
     else
-        ui_print("Ocurrio un error mientras se particionaba su SD card. Por favor vea /tmp/recovery.log para mas detalles.\n");
+		if (idiom==0){
+			ui_print("An error has happened. Please read /tmp/recovery.log for more details.\n");
+		}
+		else{
+			ui_print("Ocurrio un error mientras se particionaba su SD card. Por favor vea /tmp/recovery.log para mas detalles.\n");
+		}
+        
 }
 
 int can_partition(const char* volume) {
@@ -1358,7 +1805,24 @@ void show_advanced_menu()
                             NULL,
                             NULL
     };
-
+	
+	if (idiom==0){
+		headers[0] = "Advanced menu";
+		
+		list[0] = "Reboot in Recovery";
+		list[1] = "Wipe dalvik";
+		list[2] = "Wipe battery statistics";
+		list[3] = "Fix Permissions";
+	}
+	else{
+		headers[0] = "Menu Avanzado";
+		
+		list[0] = "Reiniciar en modo Recovery";
+		list[1] = "Borrar dalvik cache (Wipe dalvik)";
+		list[2] = "Borrar estadisticas de bateria";
+		list[3] = "Arreglar Permisos (Fix permissions)";
+	}
+	
     if (!can_partition("/sdcard")) {
         list[7] = NULL;
     }
@@ -1384,17 +1848,36 @@ void show_advanced_menu()
                     break;
                 ensure_path_mounted("/sd-ext");
                 ensure_path_mounted("/cache");
-                if (confirm_selection( "Confirmar Borrado?", "Si - Borrar Dalvik Cache")) {
+				if (idiom==0){
+					if (confirm_selection( "Confirm Wipe?", "Yes - Wipe Dalvik Cache")) {
                     __system("rm -r /data/dalvik-cache");
                     __system("rm -r /cache/dalvik-cache");
                     __system("rm -r /sd-ext/dalvik-cache");
                     ui_print("Dalvik Cache wiped.\n");
-                }
+					}
+				}
+				else{
+					if (confirm_selection( "Confirmar Borrado?", "Si - Borrar Dalvik Cache")) {
+                    __system("rm -r /data/dalvik-cache");
+                    __system("rm -r /cache/dalvik-cache");
+                    __system("rm -r /sd-ext/dalvik-cache");
+                    ui_print("Dalvik Cache borrada.\n");
+					}
+				}
+				
+                
                 ensure_path_unmounted("/data");
                 break;
             case 2:
-                if (confirm_selection( "Confirmar Borrado?", "Si - Borrar estadisticas de la Bateria"))
+				if (idiom==0){
+					if (confirm_selection( "Confirm Wipe?", "Yes - Wipe battery statistics"))
                     wipe_battery_stats();
+				}
+				else{
+					if (confirm_selection( "Confirmar Borrado?", "Si - Borrar estadisticas de la Bateria"))
+                    wipe_battery_stats();
+				}
+                
                 break;
             /*case 3:
                 handle_failure(1);
@@ -1420,9 +1903,17 @@ void show_advanced_menu()
             case 3:
                 ensure_path_mounted("/system");
                 ensure_path_mounted("/data");
-                ui_print("Arreglando Permisos...\n");
-                __system("fix_permissions");
-                ui_print("Done!\n");
+				if (idiom==0){
+					ui_print("Fixing Permissions...\n");
+					__system("fix_permissions");
+					ui_print("Done!\n");
+				}
+				else{
+					ui_print("Arreglando Permisos...\n");
+					__system("fix_permissions");
+					ui_print("Hecho!\n");
+				}
+                
                 break;
             /*case 7:
                 partition_sdcard("/sdcard");
@@ -1481,7 +1972,13 @@ void create_fstab()
 }
 
 int bml_check_volume(const char *path) {
-    ui_print("Comprobando %s...\n", path);
+	if (idiom==0){
+		ui_print("Checking %s...\n", path);
+	}
+	else{
+		ui_print("Comprobando %s...\n", path);
+	}
+    
     ensure_path_unmounted(path);
     if (0 == ensure_path_mounted(path)) {
         ensure_path_unmounted(path);
@@ -1493,8 +1990,13 @@ int bml_check_volume(const char *path) {
         LOGE("No es posible procesar el volumen! Omitiendo...\n");
         return 0;
     }
+    if (idiom==0){
+		ui_print("%s can be rfs. Checking...\n", path);
+	}
+	else{
+		ui_print("%s puede ser rfs. Comprobando...\n", path);
+	}
     
-    ui_print("%s puede ser rfs. Comprobando...\n", path);
     char tmp[PATH_MAX];
     sprintf(tmp, "Montar -t rfs %s %s", vol->device, path);
     int ret = __system(tmp);
@@ -1514,8 +2016,13 @@ void process_volumes() {
     // dead code.
     if (device_flash_type() != BML)
         return;
-
-    ui_print("Comprobando particiones ext4...\n");
+	if (idiom==0){
+		ui_print("Checking partitions ext4...\n");
+	}
+	else{
+		ui_print("Comprobando particiones ext4...\n");
+	}
+    
     int ret = 0;
     ret = bml_check_volume("/system");
     ret |= bml_check_volume("/data");
@@ -1524,7 +2031,12 @@ void process_volumes() {
     ret |= bml_check_volume("/cache");
     
     if (ret == 0) {
-        ui_print("Done!\n");
+		if (idiom==0){
+			ui_print("Done!\n");
+		}
+		else{
+			ui_print("Hecho!\n");
+		}
         return;
     }
     
@@ -1537,11 +2049,21 @@ void process_volumes() {
     sprintf(backup_path, "/sdcard/clockworkmod/backup/%s", backup_name);
 
     ui_set_show_text(1);
-    ui_print("El sistema de ficheros necesita ser convertido a ext4.\n");
-    ui_print("Un backup y una restauracion tendra lugar ahora.\n");
-    ui_print("Si algo va mal, el backup se encontrara en\n");
-    ui_print("llamado %s. Intente restaurarlo\n", backup_name);
-    ui_print("en caso de error.\n");
+	if (idiom==0){
+		ui_print("Filesystems need to be converted to ext4.\n");
+		ui_print("A backup and restore will now take place.\n");
+		ui_print("If anything goes wrong, your backup will be\n");
+		ui_print("named %s. Try restoring it\n", backup_name);
+		ui_print("in case of error.\n");
+	}
+	else{
+		ui_print("El sistema de ficheros necesita ser convertido a ext4.\n");
+		ui_print("Un backup y una restauracion tendra lugar ahora.\n");
+		ui_print("Si algo va mal, el backup se encontrara en\n");
+		ui_print("llamado %s. Intente restaurarlo\n", backup_name);
+		ui_print("en caso de error.\n");
+	}
+    
 
     nandroid_backup(backup_path);
     nandroid_restore(backup_path, 1, 1, 1, 1, 1, 0);
@@ -1556,8 +2078,15 @@ void handle_failure(int ret)
         return;
     mkdir("/sdcard/clockworkmod", S_IRWXU | S_IRWXG | S_IRWXO);
     __system("cp /tmp/recovery.log /sdcard/clockworkmod/recovery.log");
-    ui_print("/tmp/recovery.Log copiado a /sdcard/clockworkmod/recovery.log.");  
-    ui_print("Por favor,abra ROM Manager para reportar el problema.\n");
+	if (idiom==0){
+		ui_print("/tmp/recovery.Log copied to /sdcard/clockworkmod/recovery.log\n");
+		ui_print("Please,open ROM Manager to report the issue.\n");
+	}
+	else{
+		ui_print("/tmp/recovery.log copiado a /sdcard/clockworkmod/recovery.log.");  
+		ui_print("Por favor,abra ROM Manager para reportar el problema.\n");
+	}
+    
 }
 
 int is_path_mounted(const char* path) {
@@ -1606,9 +2135,17 @@ int verify_root_and_recovery() {
         if (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
             ui_show_text(1);
             ret = 1;
-            if (confirm_selection("ROM puede flashear el  stock recovery al iniciar. Arreglar?", "Si - Deshabilitar el flasheo de recovery")) {
+			if (idiom==0){
+				 if (confirm_selection("ROM may flash stock recovery on boot. Fix?", "Yes - Disable recovery flash")) {
                 __system("chmod -x /system/etc/install-recovery.sh");
-            }
+				}
+			}
+			else{
+				if (confirm_selection("ROM puede flashear el  stock recovery al iniciar. Arreglar?", "Si - Deshabilitar el flasheo de recovery")) {
+                __system("chmod -x /system/etc/install-recovery.sh");
+				}
+			}
+           
         }
     }
 
@@ -1617,9 +2154,17 @@ int verify_root_and_recovery() {
             if ((st.st_mode & (S_ISUID | S_ISGID)) != (S_ISUID | S_ISGID)) {
                 ui_show_text(1);
                 ret = 1;
-                if (confirm_selection("El acceso Root posiblemente se perdio. Arreglar?", "Si - Arreglar root (/system/bin/su)")) {
+				if (idiom==0){
+					if (confirm_selection("Root access possibly lost. Fix?", "Yes - Fix root (/system/bin/su)")) {
                     __system("chmod 6755 /system/bin/su");
-                }
+					}
+				}
+				else{
+					if (confirm_selection("El acceso Root posiblemente se perdio. Arreglar?", "Si - Arreglar root (/system/bin/su)")) {
+                    __system("chmod 6755 /system/bin/su");
+					}
+				}
+                
             }
         }
     }
@@ -1629,9 +2174,17 @@ int verify_root_and_recovery() {
             if ((st.st_mode & (S_ISUID | S_ISGID)) != (S_ISUID | S_ISGID)) {
                 ui_show_text(1);
                 ret = 1;
-               if (confirm_selection("El acceso Root posiblemente se perdio. Arreglar?", "Si - Arreglar root (/system/bin/su)")) {
+				if (idiom==0){
+					if (confirm_selection("Root access possibly lost. Fix?", "Yes - Fix root (/system/bin/su)")) {
                     __system("chmod 6755 /system/xbin/su");
-                }
+					}
+				}
+				else{
+					if (confirm_selection("El acceso Root posiblemente se perdio. Arreglar?", "Si - Arreglar root (/system/bin/su)")) {
+                    __system("chmod 6755 /system/xbin/su");
+					}
+				}
+               
             }
         }
     }
@@ -1639,6 +2192,16 @@ int verify_root_and_recovery() {
     ensure_path_unmounted("/system");
     return ret;
 }
+
+
+
+
+
+
+
+
+
+
 
  
 

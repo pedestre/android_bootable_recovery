@@ -338,7 +338,13 @@ static int
 really_install_package(const char *path)
 {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
-    ui_print("Encontrando update...\n");
+	if (idiom==0){
+		ui_print("Finding update...\n");
+	}
+	else{
+		ui_print("Encontrando update...\n");
+	}
+    
     ui_show_indeterminate_progress();
     LOGI("Update location: %s\n", path);
 
@@ -346,8 +352,13 @@ really_install_package(const char *path)
         LOGE("Can't mount %s\n", path);
         return INSTALL_CORRUPT;
     }
-
-    ui_print("Abriendo update...\n");
+	if (idiom==0){
+		ui_print("Opening update...\n");
+	}
+	else{
+		ui_print("Abriendo update...\n");
+	}
+    
 
     int err;
     if (signature_check_enabled) {
@@ -360,7 +371,13 @@ really_install_package(const char *path)
         LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
 
         // Give verification half the progress bar...
-        ui_print("Verificando update...\n");
+		if (idiom==0){
+			ui_print("Verifying update package...\n");
+		}
+		else{
+			ui_print("Verificando update...\n");
+		}
+       
         ui_show_progress(
                 VERIFICATION_PROGRESS_FRACTION,
                 VERIFICATION_PROGRESS_TIME);
@@ -369,9 +386,19 @@ really_install_package(const char *path)
         free(loadedKeys);
         LOGI("verify_file returned %d\n", err);
         if (err != VERIFY_SUCCESS) {
-            LOGE("verificación de firma fallida\n");
+            LOGE("signature verification failed\n");
             ui_show_text(1);
-            if (!confirm_selection("¿Instalar Zip No fiable?", "Si - Instalar Zip No fiable"))
+			char* cartel1;
+			char* cartel2;
+			if (idiom==0){
+				cartel1="Install Untrusted Package?";
+				cartel2="Yes - Install untrusted zip";
+			}
+			else{
+				cartel1="¿Instalar Zip No fiable?";
+				cartel2="Si - Instalar Zip No fiable";
+			}
+            if (!confirm_selection(cartel1,cartel2))
                 return INSTALL_CORRUPT;
         }
     }
@@ -387,7 +414,13 @@ really_install_package(const char *path)
 
     /* Verify and install the contents of the package.
      */
-    ui_print("Instalando update...\n");
+	if (idiom==0){
+		ui_print("Installing update...\n");
+	}
+	else{
+		ui_print("Instalando update...\n");
+	}
+    
     return try_update_binary(path, &zip);
 }
 

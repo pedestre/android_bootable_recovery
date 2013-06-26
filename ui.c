@@ -716,11 +716,9 @@ void ui_init(void)
     //gr_surface surface = gVirtualKeys;
     ev_init(input_callback, NULL);
 #ifdef BOARD_TOUCH_RECOVERY
-    touch_init();
-    
+    touch_init();  
 #endif
-
-	gr_surface surface = gVirtualKeys;
+    gr_surface surface = gVirtualKeys;
     text_col = text_row = 0;
     text_rows = gr_fb_height() / CHAR_HEIGHT;
     max_menu_rows = text_rows - MIN_LOG_ROWS;
@@ -992,7 +990,11 @@ int ui_start_menu(char** headers, char** items, int initial_selection) {
         }
 
         if (gShowBackButton && !ui_root_menu) {
-            strcpy(menu[i], " - +++++Volver+++++");
+            if (idiom==0){
+		strcpy(menu[i], " - +++++Back+++++");
+	    }else{
+            	strcpy(menu[i], " - +++++Volver+++++");
+	    }
             ++i;
         }
 
@@ -1355,3 +1357,4 @@ int check_touch_disable(void)
     }
 	
 }
+

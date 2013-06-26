@@ -113,7 +113,12 @@ static int mkyaffs2image_wrapper(const char* backup_path, const char* backup_fil
 
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
-        ui_print("No es posible ejecutar mkyaffs2image.\n");
+		if (idiom==0){
+			ui_print("Unable to execute mkyaffs2image.\n");
+		}else{
+			ui_print("No es posible ejecutar mkyaffs2image.\n");
+		}
+        
         return -1;
     }
 
@@ -132,7 +137,12 @@ static int tar_compress_wrapper(const char* backup_path, const char* backup_file
 
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
-        ui_print("No es posible ejecutar tar.\n");
+		if (idiom==0){
+			ui_print("Unable to execute tar.\n");
+		}else{
+			ui_print("No es posible ejecutar tar.\n");
+		}
+        
         return -1;
     }
 
@@ -151,11 +161,21 @@ void nandroid_dedupe_gc(const char* blob_dir) {
     char *d = dirname(backup_dir);
     strcpy(backup_dir, d);
     strcat(backup_dir, "/backup");
-    ui_print("Liberando espacio...\n");
+	if (idiom==0){
+		ui_print("Freeing space...\n");
+	}else{
+		ui_print("Liberando espacio...\n");
+	}
+    
     char tmp[PATH_MAX];
     sprintf(tmp, "dedupe gc %s $(find %s -name '*.dup')", blob_dir, backup_dir);
     __system(tmp);
-    ui_print("Liberando espacio terminado.\n");
+	if (idiom==0){
+		ui_print("Done freeing space.\n");
+	}else{
+		ui_print("Liberando espacio terminado.\n");
+	}
+    
 }
 
 static int dedupe_compress_wrapper(const char* backup_path, const char* backup_file_image, int callback) {
@@ -180,7 +200,12 @@ static int dedupe_compress_wrapper(const char* backup_path, const char* backup_f
 
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
-        ui_print("No es posible ejecutar dedupe.\n");
+		if (idiom==0){
+			ui_print("Unable to execute dedupe.\n");
+		}else{
+			ui_print("No es posible ejecutar dedupe.\n");
+		}
+        
         return -1;
     }
 
@@ -193,7 +218,8 @@ static int dedupe_compress_wrapper(const char* backup_path, const char* backup_f
     return __pclose(fp);
 }
 
-static nandroid_backup_handler default_backup_handler = dedupe_compress_wrapper;
+//static nandroid_backup_handler default_backup_handler = dedupe_compress_wrapper;
+static nandroid_backup_handler default_backup_handler = tar_compress_wrapper; 
 static char forced_backup_format[5] = "";
 void nandroid_force_backup_format(const char* fmt) {
     strcpy(forced_backup_format, fmt);
@@ -212,21 +238,36 @@ static void refresh_default_backup_handler() {
         fclose(f);
     }
     fmt[3] = NULL;
-    if (0 == strcmp(fmt, "tar"))
+	if (0 == strcmp(fmt, "dup"))
+        default_backup_handler = dedupe_compress_wrapper;
+	else
+		default_backup_handler = tar_compress_wrapper; 
+		
+    /*if (0 == strcmp(fmt, "tar"))
         default_backup_handler = tar_compress_wrapper;
     else
-        default_backup_handler = dedupe_compress_wrapper;
+        default_backup_handler = dedupe_compress_wrapper;*/
 }
 
 static nandroid_backup_handler get_backup_handler(const char *backup_path) {
     Volume *v = volume_for_path(backup_path);
     if (v == NULL) {
-        ui_print("No es posible encontrar el volumen.\n");
+		if (idiom==0){
+			ui_print("Unable to find volume.\n");
+		}else{
+			ui_print("No es posible encontrar el volumen.\n");
+		}
+        
         return NULL;
     }
     MountedVolume *mv = find_mounted_volume_by_mount_point(v->mount_point);
     if (mv == NULL) {
-        ui_print("No es posible encontrar el volumen: %s\n", v->mount_point);
+		if (idiom==0){
+			ui_print("Unable to find mounted volume: %s\n", v->mount_point);
+		}else{
+			ui_print("No es posible encontrar el volumen montado: %s\n", v->mount_point);
+		}
+        
         return NULL;
     }
 
@@ -252,10 +293,21 @@ int nandroid_backup_partition_extended(const char* backup_path, const char* moun
 
     struct stat file_info;
     int callback = stat("/sdcard/clockworkmod/.hidenandroidprogress", &file_info) != 0;
-
-    ui_print("Copiando %s...\n", name);
+	
+	if (idiom==0){
+		ui_print("Backing up %s...\n", name);
+	}else{
+		ui_print("Copiando %s...\n", name);
+	}
+	
+    
     if (0 != (ret = ensure_path_mounted(mount_point) != 0)) {
-        ui_print("No se puede montar %s!\n", mount_point);
+		if (idiom==0){
+			ui_print("Can't mount %s!\n", mount_point);
+		}else{
+			ui_print("No se puede montar %s!\n", mount_point);
+		}
+        
         return ret;
     }
     compute_directory_stats(mount_point);
@@ -271,7 +323,12 @@ int nandroid_backup_partition_extended(const char* backup_path, const char* moun
         sprintf(tmp, "%s/%s.%s", backup_path, name, mv->filesystem);
     nandroid_backup_handler backup_handler = get_backup_handler(mount_point);
     if (backup_handler == NULL) {
-        ui_print("Error encontrando un apropiado gestionador de backup.\n");
+		if (idiom==0){
+			ui_print("Error finding an appropriate backup handler.\n");
+		}else{
+			ui_print("Error encontrando un apropiado gestionador de backup.\n");
+		}
+        
         return -2;
     }
     ret = backup_handler(mount_point, tmp, callback);
@@ -279,10 +336,20 @@ int nandroid_backup_partition_extended(const char* backup_path, const char* moun
         ensure_path_unmounted(mount_point);
     }
     if (0 != ret) {
-        ui_print("Error mientras se hacía una imagen backup de %s!\n", mount_point);
+		if (idiom==0){
+			ui_print("Error while making a backup image of %s!\n", mount_point);
+		}else{
+			ui_print("Error mientras se hacía una imagen backup de %s!\n", mount_point);
+		}
+        
         return ret;
     }
-    ui_print("Copia de Seguridad de %s completada.\n", name);
+	if (idiom==0){
+		ui_print("Backup of %s completed.\n", name);
+	}else{
+		ui_print("Copia de Seguridad de %s completada.\n", name);
+	}
+    
     return 0;
 }
 
@@ -300,12 +367,27 @@ int nandroid_backup_partition(const char* backup_path, const char* root) {
             strcmp(vol->fs_type, "emmc") == 0) {
         const char* name = basename(root);
         sprintf(tmp, "%s/%s.img", backup_path, name);
-        ui_print("Copiando imagen %s ...\n", name);
+		if (idiom==0){
+			ui_print("Backing up %s image...\n", name);
+		}else{
+			ui_print("Copiando imagen %s ...\n", name);
+		}
+        
         if (0 != (ret = backup_raw_partition(vol->fs_type, vol->device, tmp))) {
-            ui_print("Error mientras se copiaba la imagen %s!", name);
+			if (idiom==0){
+				ui_print("Error while backing up %s image!", name);
+			}else{
+				ui_print("Error mientras se copiaba la imagen %s!", name);
+			}
+            
             return ret;
         }
-	ui_print("Copia de seguridad de la imagen de %s completada.\n", name);
+		if (idiom==0){
+			ui_print("Backup of %s image completed.\n", name);
+		}else{
+			ui_print("Copia de seguridad de la imagen de %s completada.\n", name);
+		}
+	
         return 0;
     }
 
@@ -320,26 +402,53 @@ int nandroid_backup(const char* backup_path)
     refresh_default_backup_handler();
     
     if (ensure_path_mounted(backup_path) != 0) {
-        return print_and_error("No se puede montar la ruta de backup.\n");
+		if (idiom==0){
+			return print_and_error("Can't mount backup path.\n");
+		}else{
+			return print_and_error("No se puede montar la ruta de backup.\n");
+		}
+        
     }
     
     Volume* volume = volume_for_path(backup_path);
-    if (NULL == volume)
+	if (idiom==0){
+		if (NULL == volume)
+        return print_and_error("Unable to find volume for backup path.\n");
+	}else{
+		if (NULL == volume)
         return print_and_error("No es posible encontrar un volumen para la ruta del backup.\n");
+	}
+    
     if (is_data_media_volume_path(volume->mount_point))
         volume = volume_for_path("/data");
     int ret;
     struct statfs s;
     if (NULL != volume) {
-        if (0 != (ret = statfs(volume->mount_point, &s)))
+		if (idiom==0){
+			if (0 != (ret = statfs(volume->mount_point, &s)))
+            return print_and_error("Unable to stat backup path.\n");
+		}else{
+			if (0 != (ret = statfs(volume->mount_point, &s)))
             return print_and_error("No es posible verificar la ruta del backup.\n");
+		}
+        
         uint64_t bavail = s.f_bavail;
         uint64_t bsize = s.f_bsize;
         uint64_t sdcard_free = bavail * bsize;
         uint64_t sdcard_free_mb = sdcard_free / (uint64_t)(1024 * 1024);
-        ui_print("Espacio libre en la SD Card: %lluMB\n", sdcard_free_mb);
-        if (sdcard_free_mb < 150)
-            ui_print("Puede que no haya suficiente espacio libre para completar el backup... continuando...\n");
+		if (idiom==0){
+			ui_print("SD Card space free: %lluMB\n", sdcard_free_mb);
+		}else{
+			ui_print("Espacio libre en la SD Card: %lluMB\n", sdcard_free_mb);
+		}
+        
+        if (sdcard_free_mb < 800){
+			if (idiom==0){
+				ui_print("There may not be enough free space to complete backup... continuing...\n");
+			}else{
+				ui_print("Puede que no haya suficiente espacio libre para completar el backup... continuando...\n");
+			}
+         }  
     }
     char tmp[PATH_MAX];
     ensure_directory(backup_path);
@@ -354,7 +463,12 @@ int nandroid_backup(const char* backup_path)
     if (vol != NULL && 0 == stat(vol->device, &s))
     {
         char serialno[PROPERTY_VALUE_MAX];
-        ui_print("Copiando WiMAX...\n");
+		if (idiom==0){
+			ui_print("Backing up WiMAX...\n");
+		}else{
+			ui_print("Copiando WiMAX...\n");
+		}
+        
         serialno[0] = 0;
         property_get("ro.serialno", serialno, "");
         sprintf(tmp, "%s/wimax.%s.img", backup_path, serialno);
@@ -368,7 +482,12 @@ int nandroid_backup(const char* backup_path)
 
     if (0 != (ret = nandroid_backup_partition(backup_path, "/preload")))
 	//return ret;
-	ui_print("Omitiendo el backup de /preload...\n");
+	if (idiom==0){
+		ui_print("Skipping backup of /preload...\n");
+	}else{
+		ui_print("Omitiendo el backup de /preload...\n");
+	}
+	
 
     if (0 != (ret = nandroid_backup_partition(backup_path, "/data")))
         return ret;
@@ -380,7 +499,12 @@ int nandroid_backup(const char* backup_path)
 
     if (0 != stat("/sdcard/.android_secure", &s))
     {
-        ui_print("No se encuentra /sdcard/.android_secure. Omitiendo backup de aplicaciones en el almacen externo.\n");
+		if (idiom==0){
+			ui_print("No /sdcard/.android_secure found. Skipping backup of app in external storage.\n");
+		}else{
+			ui_print("No se encuentra /sdcard/.android_secure. Omitiendo backup de aplicaciones en el almacen externo.\n");
+		}
+        
     }
     else
     {
@@ -394,22 +518,42 @@ int nandroid_backup(const char* backup_path)
     vol = volume_for_path("/sd-ext");
     if (vol == NULL || 0 != stat(vol->device, &s))
     {
-        ui_print("No sd-ext found. Skipping backup of sd-ext.\n");
+		if (idiom==0){
+			ui_print("No sd-ext found. Skipping backup of sd-ext.\n");
+		}else{
+			ui_print("No se encuentra sd-ext. Se omite backup de sd-ext.\n");
+		}
+        
     }
     else
     {
         if (0 != ensure_path_mounted("/sd-ext"))
 	{
-            ui_print("No se puede montar sd-ext. El backup may not be supported on this device. Skipping backup of sd-ext.\n");
+			if (idiom==0){
+				ui_print("Could not mount sd-ext. sd-ext backup may not be supported on this device. Skipping backup of sd-ext.\n");
+			}else{
+				ui_print("No se puede montar sd-ext. El backup puede no ser soportado en este modelo. Omitiendo backup de sd-ext.\n");
+			}
+            
 	}
         else if (0 != (ret = nandroid_backup_partition(backup_path, "/sd-ext")))
             return ret;
     }
-
-    ui_print("Generando md5 sum...\n");
+	
+	if (idiom==0){
+		ui_print("Generating md5 sum...\n");
+	}else{
+		ui_print("Generando md5...\n");
+	}
+    
     sprintf(tmp, "nandroid-md5.sh %s", backup_path);
     if (0 != (ret = __system(tmp))) {
-        ui_print("Error mientras se generaba md5 sum!\n");
+		if (idiom==0){
+			ui_print("Error while generating md5 sum!\n");
+		}else{
+			ui_print("Error mientras se generaba md5 sum!\n");
+		}
+        
         return ret;
     }
     
@@ -418,7 +562,12 @@ int nandroid_backup(const char* backup_path)
     sync();
     ui_set_background(BACKGROUND_ICON_CLOCKWORK);
     ui_reset_progress();
-    ui_print("\nBackup completo!\n");
+	if (idiom==0){
+		ui_print("\nBackup complete!\n");
+	}else{
+		ui_print("\nBackup completo!\n");
+	}
+    
     return 0;
 }
 
@@ -429,7 +578,12 @@ static int unyaffs_wrapper(const char* backup_file_image, const char* backup_pat
     sprintf(tmp, "cd %s ; unyaffs %s ; exit $?", backup_path, backup_file_image);
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
-        ui_print("No es posible ejecutar unyaffs.\n");
+		if (idiom==0){
+			ui_print("Unable to execute unyaffs.\n");
+		}else{
+			ui_print("No es posible ejecutar unyaffs.\n");
+		}
+        
         return -1;
     }
 
@@ -447,7 +601,11 @@ static int tar_extract_wrapper(const char* backup_file_image, const char* backup
     sprintf(tmp, "cd $(dirname %s) ; cat %s* | tar xv ; exit $?", backup_path, backup_file_image);
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
-        ui_print("No es posible ejecutar tar.\n");
+        if (idiom==0){
+			ui_print("Unable to execute tar.\n");
+		}else{
+			ui_print("No es posible ejecutar tar.\n");
+		}
         return -1;
     }
 
@@ -474,7 +632,12 @@ static int dedupe_extract_wrapper(const char* backup_file_image, const char* bac
     char path[PATH_MAX];
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
-        ui_print("No es posible ejecutar dedupe.\n");
+		if (idiom==0){
+			ui_print("Unable to execute dedupe.\n");
+		}else{
+			ui_print("No es posible ejecutar dedupe.\n");
+		}
+        
         return -1;
     }
 
@@ -489,13 +652,23 @@ static int dedupe_extract_wrapper(const char* backup_file_image, const char* bac
 static nandroid_restore_handler get_restore_handler(const char *backup_path) {
     Volume *v = volume_for_path(backup_path);
     if (v == NULL) {
-        ui_print("No es posible encontrar el volumen.\n");
+		if (idiom==0){
+			ui_print("Unable to find volume.\n");
+		}else{
+			ui_print("No es posible encontrar el volumen.\n");
+		}
+        
         return NULL;
     }
     scan_mounted_volumes();
     MountedVolume *mv = find_mounted_volume_by_mount_point(v->mount_point);
     if (mv == NULL) {
-        ui_print("No es posible encontrar el volumen montado: %s\n", v->mount_point);
+		if (idiom==0){
+			ui_print("Unable to find mounted volume: %s\n", v->mount_point);
+		}else{
+			ui_print("No es posible encontrar el volumen montado: %s\n", v->mount_point);
+		}
+        
         return NULL;
     }
 
@@ -562,11 +735,21 @@ int nandroid_restore_partition_extended(const char* backup_path, const char* mou
         }
 
         if (backup_filesystem == NULL || restore_handler == NULL) {
-            ui_print("%s.img no encontrado. Omitiendo la restauracion de %s.\n", name, mount_point);
+			if (idiom==0){
+				ui_print("No %s backup found(img, tar, dup). Skipping restore of %s.\n", name);
+			}else{
+				ui_print("%s.img no encontrado. Omitiendo la restauracion de %s.\n", name, mount_point);
+			}
+            
             return 0;
         }
         else {
-            printf("Encontrada nueva imagen backup: %s\n", tmp);
+			if (idiom==0){
+				ui_print("Found new backup image: %s\n", name);
+			}else{
+				printf("Encontrada nueva imagen backup: %s\n", tmp);
+			}
+            
         }
 
         // If the fs_type of this volume is "auto" or mount_point is /data
@@ -588,32 +771,62 @@ int nandroid_restore_partition_extended(const char* backup_path, const char* mou
     ensure_directory(mount_point);
 
     int callback = stat("/sdcard/clockworkmod/.hidenandroidprogress", &file_info) != 0;
-
-    ui_print("Restaurando %s...\n", name);
+	
+	if (idiom==0){
+		ui_print("Restoring %s...\n", name);
+	}else{
+		ui_print("Restaurando %s...\n", name);
+	}
+    
     if (backup_filesystem == NULL) {
         if (0 != (ret = format_volume(mount_point))) {
-            ui_print("Error mientras se formateaba %s!\n", mount_point);
+			if (idiom==0){
+				ui_print("Error while formatting %s!\n", mount_point);
+			}else{
+				ui_print("Error mientras se formateaba %s!\n", mount_point);
+			}
+            
             return ret;
         }
     }
     else if (0 != (ret = format_device(device, mount_point, backup_filesystem))) {
-        ui_print("Error mientras se formateaba %s!\n", mount_point);
+		if (idiom==0){
+			ui_print("Error while formatting %s!\n", mount_point);
+		}else{
+			ui_print("Error mientras se formateaba %s!\n", mount_point);
+		}
+        
         return ret;
     }
 
     if (0 != (ret = ensure_path_mounted(mount_point))) {
-        ui_print("No se puede montar %s!\n", mount_point);
+		if (idiom==0){
+			ui_print("Can't mount %s!\n", mount_point);
+		}else{
+			ui_print("No se puede montar %s!\n", mount_point);
+		}
+        
         return ret;
     }
 
     if (restore_handler == NULL)
         restore_handler = get_restore_handler(mount_point);
     if (restore_handler == NULL) {
-        ui_print("Error encontrando un apropiado gestionador de restauración.\n");
+		if (idiom==0){
+			ui_print("Error finding an appropriate restore handler.\n");
+		}else{
+			ui_print("Error encontrando un apropiado gestionador de restauración.\n");
+		}
+        
         return -2;
     }
     if (0 != (ret = restore_handler(tmp, mount_point, callback))) {
-        ui_print("Error mientras se restauraba %s!\n", mount_point);
+		if (idiom==0){
+			ui_print("Error while restoring %s!\n", mount_point);
+		}else{
+			ui_print("Error mientras se restauraba %s!\n", mount_point);
+		}
+        
         return ret;
     }
 
@@ -637,15 +850,35 @@ int nandroid_restore_partition(const char* backup_path, const char* root) {
             strcmp(vol->fs_type, "emmc") == 0) {
         int ret;
         const char* name = basename(root);
-        ui_print("Borrando %s entes de restaurar...\n", name);
+		if (idiom==0){
+			ui_print("Erasing %s before restore!\n", name);
+		}else{
+			ui_print("Borrando %s antes de restaurar...\n", name);
+		}
+        
         if (0 != (ret = format_volume(root))) {
-            ui_print("Error mientras se borraba la imagen %s!", name);
+			if (idiom==0){
+				ui_print("Error while erasing %s image!\n", name);
+			}else{
+				ui_print("Error mientras se borraba la imagen %s!\n", name);
+			}
+            
             return ret;
         }
         sprintf(tmp, "%s%s.img", backup_path, root);
-        ui_print("Restaurando la imagen %s...\n", name);
+		if (idiom==0){
+			ui_print("Restoring %s image...\n", name);
+		}else{
+			ui_print("Restaurando la imagen %s...\n", name);
+		}
+        
         if (0 != (ret = restore_raw_partition(vol->fs_type, vol->device, tmp))) {
-            ui_print("Error mientras se flasheaba la imagen %s!", name);
+			if (idiom==0){
+				ui_print("Error while flashing %s image %s!\n", name);
+			}else{
+				ui_print("Error mientras se flasheaba la imagen %s!\n", name);
+			}
+            
             return ret;
         }
         return 0;
@@ -663,8 +896,14 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
         return print_and_error("NO se puede montar la ruta del backup\n");
     
     char tmp[PATH_MAX];
-
-    ui_print("Comprobando MD5 sums...\n");
+	
+	if (idiom==0){
+		ui_print("Checking MD5 sums...\n");
+	}else{
+		ui_print("Comprobando MD5 ...\n");
+	}
+	
+    
     sprintf(tmp, "cd %s && md5sum -c nandroid.md5", backup_path);
     if (0 != __system(tmp))
         return print_and_error("MD5 no coincide!\n");
@@ -687,17 +926,38 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
         struct stat st;
         if (0 != stat(tmp, &st))
         {
-            ui_print("AVISO: La particion WiMAX existe, pero la copia\n");
-            ui_print("       nandroid no contiene una imagen de WiMAX.\n");
-            ui_print("       Debería crear un nuevo backup para proteger\n");
-            ui_print("       sus llaves WiMAX.\n");
+			if (idiom==0){
+				ui_print("WARNING: WiMAX partition exists, but nandroid\n");
+				ui_print(" backup does not contain WiMAX image.\n");
+				ui_print(" You should create a new backup to\n");
+				ui_print(" protect your WiMAX keys.\n");
+			}else{
+				ui_print("AVISO: La particion WiMAX existe, pero la copia\n");
+				ui_print("       nandroid no contiene una imagen de WiMAX.\n");
+				ui_print("       Debería crear un nuevo backup para proteger\n");
+				ui_print("       sus llaves WiMAX.\n");
+			}
+            
         }
         else
-        {
-            ui_print("Borrando WiMAX antes de restaurar...\n");
-            if (0 != (ret = format_volume("/wimax")))
-                return print_and_error("Error mientras se formateaba wimax!\n");
-            ui_print("Restaurando imagen WiMAX...\n");
+        {	
+			if (idiom==0){
+				ui_print("Wiping WiMAX before restore...\n"); 
+			}else{
+				ui_print("Borrando WiMAX antes de restaurar...\n");
+			}
+            
+            
+				if (idiom==0){
+					if (0 != (ret = format_volume("/wimax")))
+						return print_and_error("Error while formatting wimax!\n");
+					ui_print("Restoring WiMAX iamge...\n");
+				}else{
+					if (0 != (ret = format_volume("/wimax")))
+						return print_and_error("Error mientras se formateaba wimax!\n");
+					ui_print("Restaurando imagen WiMAX...\n");
+				}
+            
             if (0 != (ret = restore_raw_partition(vol->fs_type, vol->device, tmp)))
                 return ret;
         }
@@ -707,8 +967,13 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
         return ret;
     
     if (restore_system && 0 != (ret = nandroid_restore_partition(backup_path, "/preload")))
-	//return ret;   
-	ui_print("Omitiendo la restauracion de /preload...\n"); 
+	//return ret;
+	if (idiom==0){
+		ui_print("Skipping /preload...\n"); 
+	}else{
+		ui_print("Omitiendo la restauracion de /preload...\n"); 
+	}
+	
 
     if (restore_data && 0 != (ret = nandroid_restore_partition(backup_path, "/data")))
         return ret;
@@ -730,14 +995,26 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
     sync();
     ui_set_background(BACKGROUND_ICON_CLOCKWORK);
     ui_reset_progress();
-    ui_print("\nRestauracion completa!\n");
+	if (idiom==0)
+	{
+		ui_print("\nRestore complete!\n");
+	}else{
+		ui_print("\nRestauracion completa!\n");
+	}
     return 0;
 }
 
 int nandroid_usage()
 {
-    printf("Utilizacion: nandroid backup\n");
-    printf("Utilizacion: nandroid restore <carpeta>\n");
+	if (idiom==0)
+	{
+		printf("Utilization: nandroid backup\n");
+		printf("Utilization: nandroid restore <carpeta>\n");
+	}else{
+		printf("Utilizacion: nandroid backup\n");
+		printf("Utilizacion: nandroid restore <carpeta>\n");
+	}
+    
     return 1;
 }
 
