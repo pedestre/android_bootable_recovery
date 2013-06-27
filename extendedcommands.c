@@ -112,7 +112,7 @@ int install_zip(const char* packagefilepath)
     if (status != INSTALL_SUCCESS) {
         ui_set_background(BACKGROUND_ICON_ERROR);
 		if (idiom==0){
-			ui_print("Isntallation aborted.\n");
+			ui_print("Installation aborted.\n");
 		}else{
 			ui_print("Instalacion Abortada.\n");
 		}
